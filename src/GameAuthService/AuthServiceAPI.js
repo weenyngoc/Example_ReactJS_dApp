@@ -11,6 +11,15 @@ export default class AuthServiceAPI extends Component{
         })
     };
 
+    signMessage = function(address, ip) {
+        var data = {publicAddress: address, ip_login: ip};
+        axios.post('http://gapi.place:3001/api/v1/user/sign-message', data)
+        .then(res => {return res})
+        .catch(errorCode => {
+            console.error('There was an error!', errorCode);
+    })
+    }
+
     render(){
         return <div>Auth service</div>
     }

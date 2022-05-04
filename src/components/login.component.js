@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import AuthServiceAPI from './GameAuthService/AuthServiceAPI';
+import AuthServiceAPI from '../GameAuthService/AuthServiceAPI';
 var md5 = require('md5');
 const authAPI = new AuthServiceAPI();
 
