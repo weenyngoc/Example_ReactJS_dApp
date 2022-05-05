@@ -4,6 +4,7 @@ import './App.css';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom'
 import Login from './components/login.component'
 import SignUp from './components/signup.component'
+import ConnectWallet from './components/connectWallet.component'
 
 function App() {
   return (
@@ -26,6 +27,11 @@ function App() {
                     Sign up
                   </Link>
                 </li>
+                <li className="nav-item">
+                  <Link className="nav-link" to={'/connect-wallet'}>
+                    Connect Wallet
+                  </Link>
+                </li>
               </ul>
             </div>
           </div>
@@ -36,6 +42,7 @@ function App() {
               <Route exact path="/" element={<Login />} />
               <Route path="/sign-in" element={<Login />} />
               <Route path="/sign-up" element={<SignUp />} />
+              <Route path="/connect-wallet" element={<ConnectWallet />} />
             </Routes>
           </div>
         </div>
