@@ -1,43 +1,24 @@
-import React, { Component, useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import AuthServiceAPI from '../GameAuthService/AuthServiceAPI'
 import Web3 from 'web3'
 const authAPI = new AuthServiceAPI();
 
-export default class ConnectWallet extends Component {
-    state = {
-        address: "",
-        balance: null,
-        isConnected: false,
-        userInfo: null,
-    };
+function ConnectWallet () {
+    const [isConnected, setIsConnected] = useState(false);
+    const [userInfo, setUserInfo] = useState({});
+    
+    useEffect(() => {
+        function checkConnectedWallet() {
+            const userData = JSON.parse(localStorage.getItem('userAccount'));
+            if (userData != null) {
+              setUserInfo(userData);
+              setIsConnected(true);
+            }
+        }
+        checkConnectedWallet();
+    }, []);
 
-    setUserInfo = (value) => {
-        this.setState({userInfo: value});
-    }
-
-    setIsConnected = (value) => {
-        this.setState({isConnected: value});
-    }
-
-    accountChangedHandler = (newAccount) => {
-        this.setState({address: newAccount});
-    }
-
-    setBalance = (newValue) => {
-        this.setState({balance: newValue});
-    }
-
-    getUserBalance = (address) => {
-        window.ethereum.request({
-            method: "eth_getBalance",
-            params: [address, "lastest"]
-        })
-        .then((balance) => {
-            this.setBalance(balance)
-        })
-    }
-
-    detectCurrentProvider = () => {
+    const detectCurrentProvider = () => {
         let provider;
         if (window.ethereum) {
             provider = window.ethereum;
@@ -51,42 +32,23 @@ export default class ConnectWallet extends Component {
         return provider;
     };
 
-    saveUserInfo = (ethBalance, account, chainId) => {
-        const userAccount = {
-            account: account,
-            balance: ethBalance,
-            connectionid: chainId,
-        };
-        window.localStorage.setItem('userAccount', JSON.stringify(userAccount)); //user persisted data
-        const userData = JSON.parse(localStorage.getItem('userAccount'));
-        this.setUserInfo(userData);
-        this.setIsConnected(true);
-    };
-
-    handleConnectWallet = async () => {
+    const handleConnectWallet = async () => {
         try {
-            const currentProvider = this.detectCurrentProvider();
+            const currentProvider = detectCurrentProvider();
             if (currentProvider) {
               if (currentProvider !== window.ethereum) {
                 console.log(
                   'Non-Ethereum browser detected. You should consider trying MetaMask!'
                 );
               }
-              console.log('DATTQ 1');
-              currentProvider.request({ method: 'eth_requestAccounts' })
-              .then(console.log('DATTQ success'))
-              .catch((err) => {
-                  console.error('Error : ' + err);
-              });
-
-              console.log('DATTQ 2');
+              await currentProvider.request({ method: 'eth_requestAccounts' });
               const web3 = new Web3(currentProvider);
-              const userAccount = web3.eth.getAccounts();
-              const chainId = web3.eth.getChainId();
+              const userAccount = await web3.eth.getAccounts();
+              const chainId = await web3.eth.getChainId();
               const account = userAccount[0];
-              let ethBalance = web3.eth.getBalance(account); // Get wallet balance
+              let ethBalance = await web3.eth.getBalance(account); // Get wallet balance
               ethBalance = web3.utils.fromWei(ethBalance, 'ether'); //Convert balance to wei
-              this.saveUserInfo(ethBalance, account, chainId);
+              saveUserInfo(ethBalance, account, chainId);
               if (userAccount.length === 0) {
                 console.log('Please connect to meta mask');
               }
@@ -97,46 +59,48 @@ export default class ConnectWallet extends Component {
             );
           }
         // //var result = authAPI.signMessage(publicAddress, ip);
-        // if (window.ethereum) {
-        //     window.ethereum.request({method: 'eth_requestAccounts'})
-        //     .then((result) => {
-        //         this.accountChangedHandler(result[0]);
-        //     });
+    };
 
-        //     this.getUserBalance(this.state.address);
-        // } else {
-        //     //Set error message
-        //     console.error('Install Metamask');
-        // }
-    }
-
-    handleDisconnectWallet = () => {
+    const handleDisconnectWallet = () => {
         window.localStorage.removeItem('userAccount');
-        this.setUserInfo({});
-        this.setIsConnected(false);
-    }
+        setUserInfo({});
+        setIsConnected(false);
+    };
+    
+    const saveUserInfo = (ethBalance, account, chainId) => {
+        const userAccount = {
+            account: account,
+            balance: ethBalance,
+            connectionid: chainId,
+        };
+        window.localStorage.setItem('userAccount', JSON.stringify(userAccount)); //user persisted data
+        const userData = JSON.parse(localStorage.getItem('userAccount'));
+        setUserInfo(userData);
+        setIsConnected(true);
+    };
 
-    render() {
     return (
-      <form>
+      <div>
         <h3>Connect to Wallet</h3>
-
-        {!this.state.isConnected && (
+        {!isConnected && (
             <div className="d-grid">
-                <button type="submit" className="btn btn-primary" onClick={this.handleConnectWallet}>
+                <button type="submit" className="btn btn-primary" onClick={handleConnectWallet}>
                     Connect to Wallet.
                 </button>
             </div>
         )}
         
-        {(
+        {isConnected && (
             <div className="d-grid">
-                <button type="submit" className="btn btn-primary" onClick={this.handleDisconnectWallet}>
-                    Disconnect Wallet.
+                <button type="submit" className="btn btn-secondary" onClick={handleDisconnectWallet}>
+                    Disconnect Wallet: {userInfo.account} <br/>
+                    Network ID: {userInfo.connectionid} <br/>
+                    Balance: {userInfo.balance} 
                 </button>
             </div>
         )}
-      </form>
-    )
-  }
+      </div>
+    );
 }
+
+export default ConnectWallet;
